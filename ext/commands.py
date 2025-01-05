@@ -81,7 +81,6 @@ class Commands(commands.Cog):
         
         await interaction.response.send_message(embed=embed)
         
-        
     @app_commands.command(name="about", description="About me")
     async def about(self, interaction: discord.Interaction):
         DEV = self.bot.get_user(579111799794958377)

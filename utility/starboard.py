@@ -96,11 +96,13 @@ class Starboard:
             await message.edit(embed=self._get_embed(message, stars))
         except discord.NotFound:
             await self._add_to_board(starboard, message, stars)
+        except KeyError:
+            pass
     
     async def process(self, payload: discord.RawReactionActionEvent | discord.RawReactionClearEvent | discord.RawReactionClearEmojiEvent):
         db_guild = await self.client.get_guild(payload.guild_id)
         settings = db_guild.settings
-        
+
         channel: discord.GuildChannel = self.bot.get_channel(payload.channel_id)
         message: discord.Message = await channel.fetch_message(payload.message_id)
         emoji = None
@@ -137,7 +139,10 @@ class Starboard:
         db_guild.settings = settings
         
         match (action):
-            case ("REACTION_ADD"):                
+            case ("REACTION_ADD"):
+                if message.author.id == payload.user_id:
+                    await message.remove_reaction("⭐", message.author)
+                    return await self._refresh_board_message(starboard, message, stars)  
                 if str(message.id) in settings["starredMessages"]:
                     return await self._refresh_board_message(starboard, message, stars)
                 
