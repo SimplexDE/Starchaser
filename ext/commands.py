@@ -11,6 +11,7 @@ class Commands(commands.Cog):
         self.client: StarchaserClient() = StarchaserClient(bot)
     
     @app_commands.command(name="starboard", description="Set the Starboard channel")
+    @app_commands.default_permissions(manage_channels=True)
     async def starboard(self, interaction: discord.Interaction, channel: discord.TextChannel):
         
         db_guild = await self.client.get_guild(interaction.guild.id)
@@ -45,6 +46,7 @@ class Commands(commands.Cog):
         await interaction.response.send_message(embed=embed)
         
     @app_commands.command(name="stars", description="Set the needed stars")
+    @app_commands.default_permissions(manage_channels=True)
     async def stars(self, interaction: discord.Interaction, stars: int):
         
         starboard_channel = None
