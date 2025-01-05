@@ -1,0 +1,75 @@
+kind: pipeline
+type: docker
+name: deployment
+
+clone:
+  disable: true
+
+steps:
+
+- name: clone
+  image: alpine/git
+  environment:
+    USERNAME:
+      from_secret: GIT_USERNAME
+    TOKEN:
+      from_secret: GIT_TOKEN
+  commands:
+    - git clone http://$USERNAME:$TOKEN@192.168.2.11/Simplex/Starchaser.git ./Starchaser
+  when:
+    event:
+    - pull_request
+    - push
+    - custom
+    branch:
+    - master
+
+- name: build
+  image: alpinelinux/docker-cli
+  environment:
+    DOCKER_HOST: tcp://192.168.2.10:2375
+  commands:
+  - docker build -t "starchaser:latest" ./Starchaser
+  - docker tag starchaser:latest 192.168.2.10:5000/starchaser:latest
+  - docker push 192.168.2.10:5000/starchaser:latest
+  when:
+    event:
+    - pull_request
+    - push
+    - custom
+    branch:
+    - master
+
+
+- name: destroy
+  image: alpinelinux/docker-cli
+  failure: ignore
+  environment:
+    DOCKER_HOST: tcp://192.168.2.10:2375
+  commands:
+  - docker stop starchaser
+  - docker rm starchaser
+  when:
+    event:
+    - pull_request
+    - push
+    - custom
+    branch:
+    - master
+
+- name: deploy
+  image: alpinelinux/docker-cli
+  environment:
+    DOCKER_HOST: tcp://192.168.2.10:2375
+    TOKEN:
+      from_secret: starchaser_token
+  commands:
+  - docker pull 192.168.2.10:5000/starchaser:latest
+  - docker run -d --name starchaser --restart "unless-stopped" --network bridge -e "TOKEN"="$TOKEN" -e "DATABASE_NAME"="starchaser" 192.168.2.10:5000/starchaser:latest
+  when:
+    event:
+    - pull_request
+    - push
+    - custom
+    branch:
+    - master
