@@ -40,6 +40,9 @@ class Starboard:
         timestamp = message.created_at.astimezone(self.tz).strftime("%d.%m.%Y %H:%M")
         embed.set_footer(text=f"🔗 #{message.channel} — 🕒 {timestamp}")
         
+        if message.attachments:
+            embed.set_image(url=message.attachments[0].url)
+        
         return embed
     
     def _get_emoji_count(self, emoji: str, reactions: list[discord.Reaction]) -> int:
